@@ -1,0 +1,46 @@
+root@ubuntu:/var/www/html/services/prometheus# tree -L 4
+.
+├── data
+│   ├── grafana
+│   │   ├── csv
+│   │   ├── grafana.db
+│   │   ├── pdf
+│   │   ├── plugins
+│   │   │   ├── grafana-exploretraces-app
+│   │   │   ├── grafana-lokiexplore-app
+│   │   │   ├── grafana-metricsdrilldown-app
+│   │   │   └── grafana-pyroscope-app
+│   │   └── png
+│   ├── loki
+│   │   ├── boltdb-shipper-active
+│   │   │   ├── index_20453
+│   │   │   └── uploader
+│   │   ├── boltdb-shipper-cache
+│   │   ├── chunks
+│   │   │   ├── ZmFrZS80ODU5Yjg5YmIyMWI4ZjRkOjE5Yjc0ZDNkZjQ2OjE5Yjk4ZGQyYTgwOjk0ZDY0Y2U5
+│   │   │   ├── fake
+│   │   │   ├── index
+│   │   │   └── loki_cluster_seed.json
+│   │   ├── compactor
+│   │   ├── rules
+│   │   ├── tsdb-cache
+│   │   ├── tsdb-index
+│   │   │   ├── multitenant
+│   │   │   ├── per_tenant
+│   │   │   ├── scratch
+│   │   │   ├── uploader
+│   │   │   └── wal
+│   │   └── wal
+│   │       ├── 00001437
+│   │       └── checkpoint.001436.tmp
+│   └── prometheus
+│       └── data
+│           ├── 01KES4QKB97TNCMKPTW0D9ZNSF
+│           ├── chunks_head
+│           ├── lock
+│           ├── queries.active
+│           └── wal
+├── docker-compose.yml
+├── loki-config.yaml
+├── promtail-config.yaml
+└── restart.sh

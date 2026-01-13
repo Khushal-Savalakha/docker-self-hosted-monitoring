@@ -1,0 +1,84 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: info
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    batchwait: 1s        # Add this - wait time before sending batch
+    batchsize: 102400    # Add this - reduced batch size (100KB)
+    backoff_config:
+      min_period: 500ms
+      max_period: 5m
+      max_retries: 10
+    timeout: 30s         # Increase timeout from 10s to 30s
+
+scrape_configs:
+  # Scrape all Docker containers using Docker SD
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: status
+            values: [running]
+    
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      
+      - source_labels: ['__meta_docker_container_id']
+        regex: '(.{12})'
+        target_label: 'container_id'
+      
+      - source_labels: ['__meta_docker_container_image']
+        target_label: 'image'
+      
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'stream'
+      
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        regex: '(.+)'
+        target_label: 'compose_project'
+      
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        regex: '(.+)'
+        target_label: 'compose_service'
+      
+      - replacement: 'localhost'
+        target_label: 'host'
+      
+      - replacement: 'docker'
+        target_label: 'job'
+      
+      - source_labels: ['__meta_docker_container_id']
+        target_label: '__path__'
+        replacement: '/var/lib/docker/containers/$1/*.log'
+    
+    pipeline_stages:
+      - json:
+          expressions:
+            output: log
+            stream: stream
+            time: time
+      
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+      
+      - output:
+          source: output
+
+  # System logs
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          host: localhost
+          __path__: /var/log/*log
