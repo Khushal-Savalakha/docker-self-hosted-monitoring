@@ -18,6 +18,7 @@
 - [Makefile Commands](#-makefile-commands)
 - [Dashboards](#-dashboards)
 - [Contributing](#-contributing)
+- [Author](#-author)
 - [License](#-license)
 
 ---
@@ -47,6 +48,7 @@ docker-self-hosted-monitoring/
     │   ├── loki-config.yml                   # Log storage & retention config
     │   ├── promtail-config.yml               # Log collector config
     │   ├── restart.sh                        # Stack restart helper
+    │   ├── LICENSE
     │   └── dashboards/
     │       ├── container-log-monitoring.json
     │       ├── container-resource-observability.json
@@ -55,15 +57,16 @@ docker-self-hosted-monitoring/
     └── analytics-suite/                      # APM + product analytics
         ├── docker-compose.yml
         ├── nginx.conf                        # SigNoz frontend reverse proxy
-        ├── otel-collector-config.yaml        # OpenTelemetry pipeline
+        ├── otel-collector-config.yaml        # OpenTelemetry pipeline config
         ├── Makefile                          # Service management shortcuts
-        ├── example.env                       # Environment variable template
+        ├── example.env                       # Environment variable template (safe to commit)
+        ├── .env                              # Your real secrets (git ignored)
         ├── clickhouse-config/
         │   ├── cluster.xml                   # SigNoz ClickHouse cluster config
-        │   └── macros.xml
+        │   └── macros.xml                    # SigNoz ClickHouse macros
         └── posthog-clickhouse-config/
             ├── cluster.xml                   # PostHog ClickHouse cluster config
-            └── macros.xml
+            └── macros.xml                    # PostHog ClickHouse macros
 ```
 
 ---
@@ -79,25 +82,25 @@ docker-self-hosted-monitoring/
 | Loki | `grafana/loki:3.0.0` | Log aggregation & querying |
 | Promtail | `grafana/promtail:3.0.0` | Log shipping agent |
 | Node Exporter | `prom/node-exporter:latest` | Host system metrics |
-| cAdvisor | `gcr.io/cadvisor/cadvisor:latest` | Container metrics |
+| cAdvisor | `gcr.io/cadvisor/cadvisor:latest` | Container resource metrics |
 
 ### 🟧 Analytics Suite
 
 | Service | Image | Role |
 |---------|-------|------|
-| SigNoz Frontend | `signoz/frontend:latest` | APM UI |
-| SigNoz Query Service | `signoz/query-service:latest` | Backend API |
-| SigNoz OTel Collector | `signoz/signoz-otel-collector:latest` | OpenTelemetry ingestion |
-| SigNoz Schema Migrator | `signoz/signoz-schema-migrator:latest` | Schema lifecycle |
-| ClickHouse | `clickhouse/clickhouse-server:latest` | SigNoz telemetry store |
-| PostHog | `posthog/posthog:release-1.43.1` | Product analytics |
-| PostHog ClickHouse | `clickhouse/clickhouse-server:21.8` | PostHog event store |
-| Kafka | `confluentinc/cp-kafka:7.3.0` | PostHog event streaming |
-| Zookeeper | `confluentinc/cp-zookeeper:7.3.0` | Kafka coordination |
-| Redis | `redis:7` | PostHog caching & queues |
-| Graylog | `graylog/graylog:5.0` | Centralized log management |
-| Elasticsearch | `elasticsearch-oss:7.10.2` | Graylog search backend |
-| MongoDB | `mongo:5.0` | Graylog metadata store |
+| SigNoz Frontend | `signoz/frontend:latest` | APM UI served via nginx |
+| SigNoz Query Service | `signoz/query-service:latest` | Backend query API |
+| SigNoz OTel Collector | `signoz/signoz-otel-collector:latest` | OpenTelemetry ingestion pipeline |
+| SigNoz Schema Migrator | `signoz/signoz-schema-migrator:latest` | Automated schema lifecycle |
+| ClickHouse | `clickhouse/clickhouse-server:latest` | SigNoz telemetry data store |
+| Graylog | `graylog/graylog:5.0` | Centralized log management UI |
+| Elasticsearch | `elasticsearch-oss:7.10.2` | Graylog full-text search backend |
+| MongoDB | `mongo:5.0` | Graylog metadata & config store |
+| PostHog | `posthog/posthog:release-1.43.1` | Product analytics (web + plugin server) |
+| PostHog ClickHouse | `clickhouse/clickhouse-server:21.8` | PostHog dedicated event store |
+| Kafka | `confluentinc/cp-kafka:7.3.0` | PostHog high-throughput event streaming |
+| Zookeeper | `confluentinc/cp-zookeeper:7.3.0` | Kafka cluster coordination |
+| Redis | `redis:7` | PostHog session caching & task queues |
 
 ---
 
@@ -159,7 +162,7 @@ Self-hosted product analytics for tracking user behaviour, funnels, cohorts, and
 
 ```bash
 cd observability-stack/analytics-suite
-cp example.env .env        # Fill in your secrets
+cp example.env .env        # Copy template and fill in your secrets
 docker-compose up -d
 ```
 
@@ -217,8 +220,14 @@ Access Grafana at `http://localhost:3011`
 
 ```bash
 cd observability-stack/analytics-suite
+
+# Windows (PowerShell)
+copy example.env .env
+
+# Linux / macOS
 cp example.env .env
-# Edit .env with your values
+
+# Edit .env with your real values, then:
 docker-compose up -d
 ```
 
@@ -230,37 +239,89 @@ Access PostHog at `http://localhost:${POSTHOG_PORT}`
 
 ## 🔐 Environment Variables
 
-Copy `example.env` to `.env` in the analytics-suite directory and configure:
+Copy `example.env` to `.env` inside `analytics-suite/` and fill in your values.
 
-```env
-# ── Graylog ──────────────────────────────────────
-GRAYLOG_PASSWORD_SECRET=        # Min 16 chars random string
-GRAYLOG_ROOT_PASSWORD_SHA2=     # SHA256 of your admin password
+> ⚠️ **Never commit your `.env` file.** It is excluded via `.gitignore`. Only `example.env` is tracked.
 
-# ── SigNoz / ClickHouse ───────────────────────────
+```dotenv
+# ============================================================
+# Graylog
+# ============================================================
+GRAYLOG_PASSWORD_SECRET=someverystrongsecret123   # Min 16 characters
+GRAYLOG_ROOT_PASSWORD_SHA2=your-sha2-hash-here    # SHA256 of your admin password
+
+# ============================================================
+# ClickHouse (SigNoz)
+# ============================================================
 CLICKHOUSE_HOST=clickhouse
 CLICKHOUSE_PORT=9000
-CLICKHOUSE_USER=
-CLICKHOUSE_PASSWORD=
+CLICKHOUSE_USER=your-clickhouse-user
+CLICKHOUSE_PASSWORD=your-clickhouse-password
+
+# ============================================================
+# SigNoz
+# ============================================================
 SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse
 
-# ── PostHog ───────────────────────────────────────
-POSTHOG_SECRET_KEY=             # Long random secret key
-POSTHOG_PORT=8000
-POSTHOG_CLICKHOUSE_PASSWORD=
-POSTHOG_DB_USER=
-POSTHOG_DB_PASSWORD=
-POSTHOG_DB_HOST=
+# ============================================================
+# OpenTelemetry
+# ============================================================
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+OTEL_SERVICE_NAME=your-service-name
+OTEL_EXPORTER_OTLP_INSECURE=true
+SERVICE_NAME=your-service-name
+
+# ============================================================
+# PostHog Database (PostgreSQL)
+# ============================================================
+POSTHOG_DB_HOST=your-db-host
 POSTHOG_DB_PORT=5432
-SERVER_IP=localhost
+POSTHOG_DB_USER=your-db-user
+POSTHOG_DB_PASSWORD=your-db-password
+POSTHOG_DB_NAME=posthog
+
+# ============================================================
+# PostHog ClickHouse
+# ============================================================
+POSTHOG_CLICKHOUSE_HOST=posthog-clickhouse
+POSTHOG_CLICKHOUSE_PORT=9000
+POSTHOG_CLICKHOUSE_USER=default
+POSTHOG_CLICKHOUSE_PASSWORD=your-posthog-clickhouse-password
+
+# ============================================================
+# PostHog
+# ============================================================
+POSTHOG_SECRET_KEY=your-posthog-secret-key-here
+POSTHOG_API_KEY=your-posthog-api-key-here
+POSTHOG_HOST=http://your-server-ip:8003
+SERVER_IP=your-server-ip
+POSTHOG_PORT=8003
 POSTHOG_DEBUG=0
 ```
 
-> ⚠️ **Never commit your `.env` file.** It is excluded via `.gitignore`.
+### Generate Required Secrets
 
-Generate a secure Graylog password hash:
+**Graylog SHA2 password — Linux/macOS:**
 ```bash
 echo -n "yourpassword" | sha256sum | awk '{print $1}'
+```
+
+**Graylog SHA2 password — Windows PowerShell:**
+```powershell
+$pass = "yourpassword"
+$sha256 = [System.Security.Cryptography.SHA256]::Create()
+$bytes = [System.Text.Encoding]::UTF8.GetBytes($pass)
+[BitConverter]::ToString($sha256.ComputeHash($bytes)).Replace("-","").ToLower()
+```
+
+**Random Secret Key — Linux/macOS:**
+```bash
+openssl rand -hex 32
+```
+
+**Random Secret Key — Windows PowerShell:**
+```powershell
+-join ((65..90) + (97..122) + (48..57) | Get-Random -Count 50 | % {[char]$_})
 ```
 
 ---
@@ -315,7 +376,7 @@ Contributions are welcome. Please open an issue before submitting a pull request
 
 ## 📄 License
 
-This project is licensed under the terms of the [LICENSE](observability-stack/grafana-suite/LICENSE) file included in this repository.
+This project is licensed under the terms of the [LICENSE](LICENSE) file included in this repository.
 
 ---
 
