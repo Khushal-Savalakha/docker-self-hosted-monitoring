@@ -1,0 +1,87 @@
+# ========================
+# SECRETS & ENVIRONMENT
+# ========================
+.env
+*.env
+
+
+# ========================
+# DOCKER VOLUMES & DATA
+# ========================
+volumes/
+data/
+**/data/
+**/volumes/
+
+# Grafana Suite
+grafana-suite/grafana-data/
+grafana-suite/prometheus-data/
+grafana-suite/loki-data/
+grafana-suite/promtail-data/
+
+# Analytics Suite - ClickHouse
+analytics-suite/clickhouse-data/
+analytics-suite/posthog-clickhouse-data/
+
+# Analytics Suite - Databases
+analytics-suite/postgres-data/
+analytics-suite/redis-data/
+analytics-suite/mongo-data/
+
+# Analytics Suite - Elasticsearch / Graylog
+analytics-suite/elasticsearch-data/
+analytics-suite/graylog-data/
+analytics-suite/mongodb-data/
+
+# SigNoz
+analytics-suite/signoz-data/
+analytics-suite/zookeeper-data/
+analytics-suite/kafka-data/
+
+# ========================
+# LOGS
+# ========================
+*.log
+logs/
+**/logs/
+
+# ========================
+# OS FILES
+# ========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========================
+# WINDOWS SPECIFIC
+# ========================
+$RECYCLE.BIN/
+*.lnk
+
+# ========================
+# EDITORS
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ========================
+# CERTIFICATES & KEYS
+# ========================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+ssl/
+certs/
+
+# ========================
+# TEMP FILES
+# ========================
+tmp/
+temp/
+*.tmp
+*.bak

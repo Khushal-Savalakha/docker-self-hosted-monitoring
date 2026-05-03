@@ -1,0 +1,7 @@
+<yandex>
+    <macros>
+        <shard>1</shard>
+        <replica>posthog-clickhouse</replica>
+        <cluster>posthog</cluster>
+    </macros>
+</yandex>
